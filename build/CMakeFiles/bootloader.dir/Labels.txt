@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+/Users/panpoming/Documents/cannon/build/CMakeFiles/bootloader
+/Users/panpoming/Documents/cannon/build/CMakeFiles/bootloader.rule
+/Users/panpoming/Documents/cannon/build/CMakeFiles/bootloader-complete.rule
+/Users/panpoming/Documents/cannon/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+/Users/panpoming/Documents/cannon/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+/Users/panpoming/Documents/cannon/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+/Users/panpoming/Documents/cannon/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+/Users/panpoming/Documents/cannon/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+/Users/panpoming/Documents/cannon/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+/Users/panpoming/Documents/cannon/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule
