@@ -1,14 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_bt.h"
-
 #include "esp_gap_ble_api.h"
 #include "esp_gatts_api.h"
 #include "esp_bt_defs.h"
@@ -18,13 +16,6 @@
 #include "ble.h"
 
 #define TAG "BLE_CFG"
-
-// 蓝牙超时相关变量
-bool g_ble_timeout_flag = false;
-bool g_ble_connected = false;
-bool g_ble_disconnected = false;
-TimerHandle_t ble_timeout_timer = NULL;
-QueueHandle_t ble_event_queue;
 
 
 //蓝牙模块
@@ -164,10 +155,10 @@ static esp_ble_adv_data_t adv_data = {
     .set_scan_rsp = false,      //此广播数据是否扫描回复
     .include_name = true,       //是否包含名字
     .include_txpower = false,   //是否包含发射功率
-    .min_interval = 0x0006, //最小连接间隔 单位1.25ms
-    .max_interval = 0x0010, //最大连接间隔 单位1.25ms
-    .appearance = 0x00,     //apperance
-    .manufacturer_len = 0, //厂商信息长度
+    .min_interval = 0x0006,     //最小连接间隔 单位1.25ms
+    .max_interval = 0x0010,     //最大连接间隔 单位1.25ms
+    .appearance = 0x00,         //apperance
+    .manufacturer_len = 0,      //厂商信息长度
     .p_manufacturer_data =  NULL, //厂商信息
     .service_data_len = 0,      //服务数据长度
     .p_service_data = NULL,     //服务数据
@@ -192,14 +183,6 @@ static esp_ble_adv_data_t scan_rsp_data = {
     .flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT),
 };
 
-esp_err_t ble_manager_disable(void) {
-    ble_event_t evt = BLE_EVENT_SHUTDOWN;
-    if (xQueueSend(ble_event_queue, &evt, 0) == pdTRUE) {
-        ESP_LOGI(TAG, "Shutdown event queued");
-        return ESP_OK;
-    }
-    return ESP_FAIL;
-}
 
 /**
  * gatt事件回调函数
@@ -208,14 +191,6 @@ esp_err_t ble_manager_disable(void) {
  * @param param 事件参数
  * @return 无
  */
-// 蓝牙超时回调函数
-static void ble_timeout_cb(void* arg) {
-    if (!g_ble_connected) {
-        g_ble_timeout_flag = true;
-        ble_manager_disable();
-    }
-}
-
 static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
     switch (event) {
@@ -250,14 +225,14 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
                 //gl_conn_id = param->connect.conn_id;
             }
         }
-       	    break;
+        break;
         case ESP_GATTS_READ_EVT:    //收到客户端的读取事件
         {
             ESP_LOGI(TAG, "ESP_GATTS_READ_EVT");
             esp_gatt_rsp_t rsp;
             memset(&rsp, 0, sizeof(esp_gatt_rsp_t));
             rsp.attr_value.handle = param->read.handle;
-            if(sv1_handle_table[SV1_CH1_IDX_CHAR_VAL] == param->read.handle)
+            if(sv1_handle_table[SV1_CH2_IDX_CHAR_VAL] == param->read.handle)
             {
                 rsp.attr_value.len = sizeof(sv1_char2_value);
                 memcpy(rsp.attr_value.value,sv1_char2_value,sizeof(sv1_char2_value));
@@ -349,9 +324,9 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 
         case ESP_GATTS_DISCONNECT_EVT:  //收到断开连接事件
             ESP_LOGI(TAG, "ESP_GATTS_DISCONNECT_EVT, reason = 0x%x", param->disconnect.reason);
-            //esp_ble_gap_start_advertising(&adv_params);
+            esp_ble_gap_start_advertising(&adv_params);
             //关闭蓝牙
-            ble_manager_disable();
+            //ble_manager_disable();
 
             gl_conn_id = 0xFFFF;
             break;
@@ -459,18 +434,6 @@ esp_err_t ble_cfg_net_init(void)
     ESP_ERROR_CHECK(esp_ble_gap_register_callback(gap_event_handler));
     ESP_ERROR_CHECK(esp_ble_gatts_app_register(ESP_APP_ID));    //一个APP对应一份Profile
     ESP_ERROR_CHECK(esp_ble_gatt_set_local_mtu(500));
-
-    ble_event_queue = xQueueCreate(4, sizeof(ble_event_t));
-
-    const esp_timer_create_args_t timer_args = {
-        .callback = &ble_timeout_cb,
-        .arg = NULL,
-        .dispatch_method = ESP_TIMER_TASK,
-        .name = "one_minute_timer"
-    };
-    esp_timer_handle_t timeout_timer;
-    esp_timer_create(&timer_args, &timeout_timer);
-    esp_timer_start_once(timeout_timer, 60000000); // 60秒后触发一次
 
     return ESP_OK;
 }
