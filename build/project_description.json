@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "cannon",
-    "project_version":    "1",
+    "project_version":    "2775eaf-dirty",
     "project_path":       "/Users/panpoming/Documents/cannon",
     "idf_path":           "/Users/panpoming/esp/esp-idf",
     "build_dir":          "/Users/panpoming/Documents/cannon/build",

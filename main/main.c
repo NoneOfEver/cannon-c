@@ -15,6 +15,26 @@
 #include "nvs_flash.h"
 #include "ble.h"
 
+// ble接收处理任务
+void ble_task(void* param)
+{
+
+    while(1)
+    {
+        // 接收任务
+        if(g_ble_recive_flag == 1)
+        {
+            g_ble_recive_flag = 0;
+
+
+            // 处理接收到的数据
+            
+            // 获取BLE数据长度（在ble.h中定义了sv1_char1_value_len）
+        }
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
 void app_main(void)
 {
     // nvs
@@ -28,6 +48,6 @@ void app_main(void)
     // BLE
     ble_cfg_net_init();
 
-    // xTaskCreatePinnedToCore(ble_task,"ble_task",6144,NULL,3,NULL,1);
+    xTaskCreatePinnedToCore(ble_task,"ble_task",6144,NULL,3,NULL,1);
 
 }

@@ -85,7 +85,6 @@ static uint16_t gl_gatts_if = ESP_GATT_IF_NONE;
 static uint16_t gl_conn_id = 0xFFFF;
 
 //char1的值
-// static char sv1_char1_value[20] = {0};
 uint8_t sv1_char1_value[20] = {0};
 uint8_t sv1_char1_value_len;
 //char2的值

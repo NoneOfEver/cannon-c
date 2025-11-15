@@ -17,5 +17,6 @@
     "--compile-commands-dir=${workspaceFolder}/build"
   ],
   "clangd.checkUpdates": true,
-  "C_Cpp.enhancedColorization": "disabled"
+  "C_Cpp.enhancedColorization": "disabled",
+  "idf.flashType": "UART"
 }
