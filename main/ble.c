@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -81,7 +82,7 @@ static uint16_t gl_conn_id = 0xFFFF;
 uint8_t sv1_char1_value[20] = {0};
 uint8_t sv1_char1_value_len;
 //char2的值
-static char sv1_char2_value[20] = {0};
+uint8_t sv1_char2_value[20] = {0};
 
 //att的handle表
 uint16_t sv1_handle_table[SV1_IDX_NB];

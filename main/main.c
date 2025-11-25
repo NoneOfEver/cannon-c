@@ -35,7 +35,7 @@
 
 uint16_t g_voltage_value = 123;   // 发送给小程序的电压值
 float g_voltage_value_f = 0.0f;   // 发送给小程序的电压值
-float g_targe_voltage_f = 200.0f;   // 目标充电电压
+float g_target_voltage_f = 200.0f;   // 目标充电电压
 uint8_t g_charge_complete_flag = 0; // 充电完毕标志位
 uint8_t g_cmd = 0xFF;
 
@@ -71,28 +71,27 @@ uint16_t float_to_uint16(float x) {
 
 // ble接收处理任务
 void ble_task(void* param) {
-    for(;;)
-    {
+
+    for(;;) {
+        // 发送电压值 (帧头 SOF=0xFF)
         uint8_t voltage_tx_data[3] = {SOF,0x00,0x00};
         g_voltage_value = float_to_uint16(g_voltage_value_f);
         memcpy(&voltage_tx_data[1],&g_voltage_value,2 * sizeof(uint8_t));
         ble_send_ch2_data(voltage_tx_data,sizeof(voltage_tx_data));
-        vTaskDelay(pdMS_TO_TICKS(10));
         
+        vTaskDelay(pdMS_TO_TICKS(10));  // 增加发送间隔
+        
+        // 发送弹速数据 (帧头 0xFC)
+        uint8_t speed_tx_data[5] = {0xFC}; 
+        memcpy(&speed_tx_data[1], &g_speed, 4 * sizeof(uint8_t));
+        ble_send_ch2_data(speed_tx_data, sizeof(speed_tx_data));
+
+        vTaskDelay(pdMS_TO_TICKS(10));
+
+        // 发送充电状态 (帧头 STATUS_SOF=0xFE)
         uint8_t status_tx_data[2] = {STATUS_SOF,0x00};
-        status_tx_data[1] = g_charge_complete_flag;
-        ble_send_ch2_data(status_tx_data, sizeof(status_tx_data));      
-        vTaskDelay(pdMS_TO_TICKS(10));
-        
-        // 从队列获取最新速度数据
-        float current_speed = 0.0f;
-        if (xQueueReceive(speed_queue, &current_speed, 0) == pdTRUE) {
-            // 发送速度数据
-            uint8_t speed_tx_data[5] = {0xFC, 0x00, 0x00, 0x00, 0x00}; // 0xFC作为速度数据标识
-            memcpy(&speed_tx_data[1], &current_speed, 4 * sizeof(uint8_t));
-            ble_send_ch2_data(speed_tx_data, sizeof(speed_tx_data));
-        }
-        
+        memcpy(&status_tx_data[1],&g_charge_complete_flag,sizeof(uint8_t));
+        ble_send_ch2_data(status_tx_data, sizeof(status_tx_data));
 
         // 接收任务
         if(g_ble_recive_flag == 1)
@@ -102,21 +101,17 @@ void ble_task(void* param) {
                 g_cmd = sv1_char1_value[1];
             }
             if(sv1_char1_value[0] == STATUS_SOF && sv1_char1_value_len == 3) {
-                 uint16_t raw = ((uint16_t)sv1_char1_value[2] << 8) | sv1_char1_value[1];
-                g_targe_voltage_f = raw;
-                ESP_LOGI("task","%f",g_targe_voltage_f);
+                uint16_t raw = ((uint16_t)sv1_char1_value[2] << 8) | sv1_char1_value[1];
+                g_target_voltage_f = raw;
+                ESP_LOGI("task","%f",g_target_voltage_f);
             }
-
-            // 处理接收到的数据
-            
-            // 获取BLE数据长度（在ble.h中定义了sv1_char1_value_len）
         }
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
 float adc_data_to_vin(uint16_t data) {
-    // ---- 将你的拟合系数放这里 ----
+
     const float a = -1.1078771331e-11;
     const float b = 2.8331331216e-08;
     const float c = 8.4934727972e-04;
@@ -277,8 +272,7 @@ void speed_task(void* param) {
                 // 速度 = 距离 / 时间(转换为秒)
                 float speed = g_sensor_distance / (time_diff / 1000000.0f);
                 
-                // 发送到队列
-                xQueueSend(speed_queue, &speed, 0);
+                g_speed = speed;
                 
                 ESP_LOGI(TAG, "测量速度: %.2f m/s (时间差: %llu μs)", speed, time_diff);
             }
@@ -337,9 +331,9 @@ void control_task(void* param) {
                 g_cmd = 0xFF;
             break;
             case(CANNON_CHARGE):
-                ESP_LOGI(TAG_CONTROL, "~~~CANNON CHARGE~~~");
+                // ESP_LOGI(TAG_CONTROL, "~~~CANNON CHARGE~~~");
                 gpio_set_level(GPIO_SHOOT, 0);   // 先关闭发射
-                if(g_voltage_value_f < g_targe_voltage_f) {
+                if(g_voltage_value_f < g_target_voltage_f) {
                     gpio_set_level(GPIO_CHARGE, 1);  // 开启充电
                     g_charge_complete_flag = 0;
                 }else {
@@ -347,7 +341,7 @@ void control_task(void* param) {
                     g_charge_complete_flag = 1;
                     g_cmd = 0xFF;
                 }
-                
+            break;
             default:
             break;
         }
