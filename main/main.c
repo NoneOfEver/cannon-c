@@ -322,25 +322,24 @@ void control_task(void* param) {
                 g_cmd = 0xFF;
             break;
             case(CANNON_SHOOT):
-                ESP_LOGI(TAG_CONTROL, "!!!!!CANNON SHOOT!!!!");
-                gpio_set_level(GPIO_CHARGE, 0);  // 先关闭充电
-                gpio_set_level(GPIO_SHOOT, 1);   // 触发发射
-                vTaskDelay(pdMS_TO_TICKS(100));  // 保持100ms脉冲
-                gpio_set_level(GPIO_SHOOT, 0);   // 关闭发射
-                g_charge_complete_flag = 0;
-                g_cmd = 0xFF;
-            break;
-            case(CANNON_CHARGE):
-                // ESP_LOGI(TAG_CONTROL, "~~~CANNON CHARGE~~~");
                 gpio_set_level(GPIO_SHOOT, 0);   // 先关闭发射
                 if(g_voltage_value_f < g_target_voltage_f) {
                     gpio_set_level(GPIO_CHARGE, 1);  // 开启充电
                     g_charge_complete_flag = 0;
                 }else {
-                    gpio_set_level(GPIO_CHARGE, 0);   // 关闭充电
+                    gpio_set_level(GPIO_CHARGE, 0);  // 先关闭充电
+                    vTaskDelay(pdMS_TO_TICKS(3000));
+                    ESP_LOGI(TAG_CONTROL, "!!!!!CANNON SHOOT!!!!");
+                    gpio_set_level(GPIO_SHOOT, 1);   // 触发发射
+                    vTaskDelay(pdMS_TO_TICKS(200));  // 保持200ms脉冲
+                    gpio_set_level(GPIO_SHOOT, 0);   // 关闭发射
                     g_charge_complete_flag = 1;
                     g_cmd = 0xFF;
                 }
+            break;
+            case(CANNON_CHARGE):
+                // ESP_LOGI(TAG_CONTROL, "~~~CANNON CHARGE~~~");
+                g_charge_complete_flag = 0;
             break;
             default:
             break;
