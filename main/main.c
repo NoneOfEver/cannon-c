@@ -322,24 +322,77 @@ void control_task(void* param) {
                 g_cmd = 0xFF;
             break;
             case(CANNON_SHOOT):
-                gpio_set_level(GPIO_SHOOT, 0);   // 先关闭发射
-                if(g_voltage_value_f < g_target_voltage_f) {
-                    gpio_set_level(GPIO_CHARGE, 1);  // 开启充电
-                    g_charge_complete_flag = 0;
-                }else {
-                    gpio_set_level(GPIO_CHARGE, 0);  // 先关闭充电
-                    vTaskDelay(pdMS_TO_TICKS(3000));
-                    ESP_LOGI(TAG_CONTROL, "!!!!!CANNON SHOOT!!!!");
-                    gpio_set_level(GPIO_SHOOT, 1);   // 触发发射
-                    vTaskDelay(pdMS_TO_TICKS(200));  // 保持200ms脉冲
-                    gpio_set_level(GPIO_SHOOT, 0);   // 关闭发射
-                    g_charge_complete_flag = 1;
-                    g_cmd = 0xFF;
-                }
+                ESP_LOGI(TAG_CONTROL, "!!!!!CANNON SHOOT!!!!");
+                gpio_set_level(GPIO_CHARGE, 0);  // 先关闭充电
+                gpio_set_level(GPIO_SHOOT, 1);   // 触发发射
+                vTaskDelay(pdMS_TO_TICKS(100));  // 保持100ms脉冲
+                gpio_set_level(GPIO_SHOOT, 0);   // 关闭发射
+                g_charge_complete_flag = 0;
+                g_cmd = 0xFF;
             break;
             case(CANNON_CHARGE):
                 // ESP_LOGI(TAG_CONTROL, "~~~CANNON CHARGE~~~");
-                g_charge_complete_flag = 0;
+                gpio_set_level(GPIO_SHOOT, 0);   // 先关闭发射
+                if((g_target_voltage_f > 35) && (g_target_voltage_f < 45)) {
+                    gpio_set_level(GPIO_CHARGE, 1);  // 开启充电
+                    g_charge_complete_flag = 0;
+                    vTaskDelay(pdMS_TO_TICKS(80));
+                    gpio_set_level(GPIO_CHARGE, 0);   // 关闭充电
+                    g_charge_complete_flag = 1;
+                    g_cmd = 0xFF;
+                } else if ((g_target_voltage_f > 45) && (g_target_voltage_f < 55)) {
+                    gpio_set_level(GPIO_CHARGE, 1);  // 开启充电
+                    g_charge_complete_flag = 0;
+                    vTaskDelay(pdMS_TO_TICKS(100));
+                    gpio_set_level(GPIO_CHARGE, 0);   // 关闭充电
+                    g_charge_complete_flag = 1;
+                    g_cmd = 0xFF;
+                } else if ((g_target_voltage_f > 55) && (g_target_voltage_f < 65)) {
+                    gpio_set_level(GPIO_CHARGE, 1);  // 开启充电
+                    g_charge_complete_flag = 0;
+                    vTaskDelay(pdMS_TO_TICKS(150));
+                    gpio_set_level(GPIO_CHARGE, 0);   // 关闭充电
+                    g_charge_complete_flag = 1;
+                    g_cmd = 0xFF;
+                } else if ((g_target_voltage_f > 65) && (g_target_voltage_f < 75)) {
+                    gpio_set_level(GPIO_CHARGE, 1);  // 开启充电
+                    g_charge_complete_flag = 0;
+                    vTaskDelay(pdMS_TO_TICKS(180));
+                    gpio_set_level(GPIO_CHARGE, 0);   // 关闭充电
+                    g_charge_complete_flag = 1;
+                    g_cmd = 0xFF;
+                } else if ((g_target_voltage_f > 75) && (g_target_voltage_f < 85)) {
+                    gpio_set_level(GPIO_CHARGE, 1);  // 开启充电
+                    g_charge_complete_flag = 0;
+                    vTaskDelay(pdMS_TO_TICKS(210));
+                    gpio_set_level(GPIO_CHARGE, 0);   // 关闭充电
+                    g_charge_complete_flag = 1;
+                    g_cmd = 0xFF;
+                } else if ((g_target_voltage_f > 85) && (g_target_voltage_f < 95)) {
+                    gpio_set_level(GPIO_CHARGE, 1);  // 开启充电
+                    g_charge_complete_flag = 0;
+                    vTaskDelay(pdMS_TO_TICKS(240));
+                    gpio_set_level(GPIO_CHARGE, 0);   // 关闭充电
+                    g_charge_complete_flag = 1;
+                    g_cmd = 0xFF;
+                } else if ((g_target_voltage_f > 95) && (g_target_voltage_f < 105)) {
+                    gpio_set_level(GPIO_CHARGE, 1);  // 开启充电
+                    g_charge_complete_flag = 0;
+                    vTaskDelay(pdMS_TO_TICKS(250));
+                    gpio_set_level(GPIO_CHARGE, 0);   // 关闭充电
+                    g_charge_complete_flag = 1;
+                    g_cmd = 0xFF;
+                } else {
+                    if(g_voltage_value_f < g_target_voltage_f) {
+                        gpio_set_level(GPIO_CHARGE, 1);  // 开启充电
+                        g_charge_complete_flag = 0;
+                    }else {
+                        gpio_set_level(GPIO_CHARGE, 0);   // 关闭充电
+                        g_charge_complete_flag = 1;
+                        g_cmd = 0xFF;
+                    }
+                }
+                
             break;
             default:
             break;
